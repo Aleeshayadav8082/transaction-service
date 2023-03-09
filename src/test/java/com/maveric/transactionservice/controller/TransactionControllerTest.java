@@ -62,7 +62,6 @@ class TransactionControllerTest {
 
     @Test
     void shouldCreateUser() throws Exception{
-
         when(feignAccountConsumer.getAccount(anyString(), anyString(), anyString())).thenReturn(getAccountDto());
         when(feignBalanaceConsumer.getAllBalanceByAccountId(anyString(), anyString())).thenReturn(getSampleBalance());
         mockMvc.perform(post(API_V1_ACCOUNTS)
@@ -72,16 +71,43 @@ class TransactionControllerTest {
     }
 
     @Test
+    void shouldThrowErrorWhenAccountIdNotFoundForCreateUser() throws Exception{
+        when(feignAccountConsumer.getAccount(anyString(), anyString(), anyString())).thenThrow(AccountIdMismatchException.class);
+        mockMvc.perform(post(API_V1_NOT_ACCOUNTS)
+                        .contentType(MediaType.APPLICATION_JSON).header("userid", "1234")
+                        .content(objectMapper.writeValueAsString(getTransactionDto()))).andExpect(status().isNotFound())
+                .andDo(print());
+    }
+
+    @Test
+    void getTransactionByAccountId() throws Exception{
+        when(feignAccountConsumer.getAccount(anyString(), anyString(), anyString())).thenReturn(getAccountDto());
+        mockMvc.perform(get(API_V1_ACCOUNTS +"/1234")
+                        .contentType(MediaType.APPLICATION_JSON).header("userid", "1234"))
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
+    void getAllTransactionByAccountId() throws Exception{
+        when(feignAccountConsumer.getAccount(anyString(), anyString(), anyString())).thenReturn(getAccountDto());
+        mockMvc.perform(get(API_V1_ACCOUNTS)
+                        .contentType(MediaType.APPLICATION_JSON).header("userid", "1234"))
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
     void shouldThrowErrorWhenHeaderIdIsDifferentForGetAllTransactionByAccountId() throws Exception{
-       mockMvc.perform(get(API_V1_ACCOUNTS + "?page=0&pageSize=2").header("userid", "1234"))
-               .andExpect(status().isNotFound())
+        mockMvc.perform(get(API_V1_ACCOUNTS + "?page=0&pageSize=2").header("userid", "1234"))
+                .andExpect(status().isNotFound())
                 .andDo(print());
     }
 
     @Test
     void shouldThrowErrorWhenHeaderIdIsDifferentForgetTransactionByAccountId() throws Exception{
-       mockMvc.perform(get(API_V1_ACCOUNTS + "/1234").header("userid", "1234"))
-               .andExpect(status().isNotFound())
+        mockMvc.perform(get(API_V1_ACCOUNTS + "/1234").header("userid", "1234"))
+                .andExpect(status().isNotFound())
                 .andDo(print());
     }
 
